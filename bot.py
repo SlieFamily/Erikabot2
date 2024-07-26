@@ -73,14 +73,13 @@ async def delana(api: BotAPI, message: Message, params=None):
             num = name[0][1]
             name = name[0][0]
             group_id = "144115218677966082"
-            ana = model.GetAna(name,group,int(num))
+            ana = model.GetAna(name,group_id,int(num))
             del_msg = model.IsDel(name,str(ana))
         if del_msg:
             await message.reply(content="这种垃圾语录没有存在的必要！")
-            return True
         else:
             await message.reply(content="失败了失败了失败了……")
-            return False
+    return True
 
 @Commands("/drop")
 async def dropana(api: BotAPI, message: Message, params=None):
@@ -88,14 +87,13 @@ async def dropana(api: BotAPI, message: Message, params=None):
         _log.info(params)
         name = re.findall(anas_rule, str(params))
         if name:
-            name = name[0][0]
+            name = name[0]
             flag = model.DropAna(name)
         if flag:
             await message.reply(content=f"果然{name}语录，就是应该狼狈退场呢~")
-            return True
         else:
             await message.reply(content="嘁，让他侥幸存活了")
-            return False
+    return True
 
 async def theirana(message: Message):
     name = re.findall(f" {anas_rule}[-]*([0-9]*)",str(message.content))
@@ -117,7 +115,7 @@ async def theirana(message: Message):
             messageResult = await message._api.post_group_message(
                     group_openid=message.group_openid,
                     msg_type=0, #2为markdown消息 
-                    # msg_id=message.id,
+                    msg_id=message.id,
                     content=my_ana,
                     # markdown=markdown,
                     # keyboard=keyboard,
