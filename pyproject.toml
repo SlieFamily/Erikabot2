@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "erikabot"
+version = "2.0.0"
+description = "Erikabot Re Project based on official Python SDK."
+authors = ["Slie-wdy"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+qq-botpy = "^1.2.1"
+
+[tool.poetry.group.dev.dependencies]
+qq-botpy = "^1.2.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
