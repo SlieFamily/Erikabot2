@@ -10,6 +10,10 @@ from botpy.ext.cog_yaml import read
 from botpy.message import GroupMessage, Message
 from botpy.types.inline import Keyboard, Button, RenderData, Action, Permission, KeyboardRow
 from botpy.types.message import MarkdownPayload, KeyboardPayload
+from utils.QImage import *
+
+# 获取Bot主目录
+path = os.path.abspath(os.getcwd())
 
 # 载入机器人配置
 test_config = read(os.path.join(os.path.dirname(__file__), "config.yaml"))
@@ -56,13 +60,19 @@ async def addana(api: BotAPI, message: Message, params=None):
         # by = message.author.username # 等待官方实现
         by = "Auto"
         if not ana:
-            _log.info(message.attachments)
+            for media in message.attachments:
+                if media.content_type == 'image/jpeg':
+                    _log.info('[!]所添加语录存在图片消息')
+                    file_url = image_download(media.url, tag=name)
+                    ana = f"[CQ:image,file=file://{path}/{file_url}]" #标记为图片类型'file://'+path+'/
+                    break
+                else:
+                    return True
         if model.IsAdded(name,ana,by):
             await message.reply(content=random.choice(rsp))
-            return True
         else:
             await message.reply(content="苦撸西，失败了失败了！")
-            return False
+    return True
 
 @Commands("/del")
 async def delana(api: BotAPI, message: Message, params=None):
@@ -95,6 +105,23 @@ async def dropana(api: BotAPI, message: Message, params=None):
             await message.reply(content="嘁，让他侥幸存活了")
     return True
 
+@Commands("/search")
+async def searchana(api: BotAPI, message: Message, params=None):
+    if params:
+        _log.info(params)
+        ana = str(params)
+        infs = model.Inf(ana)
+        if infs:
+            msg = f"\n发现{len(infs)}条相关语录\n\n"
+            for i in range(len(infs)):
+                msg += f'{infs[i][0]}语录-{infs[i][3]}：\n'
+                msg += infs[i][1]
+                msg += f'\n添加者：{infs[i][2]}'
+                if i < len(infs)-1:
+                    msg += '\n\n'
+            await message.reply(content=msg)
+    return True
+
 async def theirana(message: Message):
     name = re.findall(f" {anas_rule}[-]*([0-9]*)",str(message.content))
     _log.info(str(name))
@@ -110,6 +137,22 @@ async def theirana(message: Message):
             except:
                 pass
         if my_ana:
+            match = re.match(r'\[CQ:image,file=([^]]+)\]', my_ana)
+            if match:
+                file_url = match.group(1)
+                _log.info(file_url)
+                uploadMedia = await message._api.post_group_file(
+                    group_openid=message.group_openid, 
+                    file_type=1, # 1 图片，2 视频，3 语音，4 文件（暂不开放）
+                    url=file_url # 文件Url
+                )
+                await message._api.post_group_message(
+                    group_openid=message.group_openid,
+                    msg_type=7, # 0 文本，2 是 markdown，3 ark 消息，4 embed，7 media 富媒体
+                    msg_id=message.id,
+                    media=uploadMedia
+                )
+                return True
             # markdown = MarkdownPayload(content=f"{my_ana}\n>{name}语录")
             # keyboard = KeyboardPayload(content=build_a_demo_keyboard(name))
             messageResult = await message._api.post_group_message(
@@ -134,6 +177,7 @@ class MyClient(botpy.Client):
             addana,
             delana,
             dropana,
+            searchana,
             # good_night,
         ]
         for handler in handlers:

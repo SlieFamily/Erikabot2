@@ -1,11 +1,7 @@
 import re
+import sqlite3
 
-anas_rule = "([\w\W]{1,6})语录"
-
-def split_ana(text):
-    name = re.findall(anas_rule,str(text))
-    if name:
-    	return name
-
-name = split_ana("我要爆点语")
-print(name)
+db = sqlite3.connect('db/anas.db')
+cur = db.cursor()
+cur.execute(f'''select * from "_爆点" where ana like "%爆点%"''')
+print(cur.fetchall())
