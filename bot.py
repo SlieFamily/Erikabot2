@@ -111,14 +111,24 @@ async def searchana(api: BotAPI, message: Message, params=None):
         _log.info(params)
         ana = str(params)
         infs = model.Inf(ana)
+
+        url_pattern = re.compile(
+            r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+        )# URL 正则表达式
+        k = 0
+
         if infs:
             msg = f"\n发现{len(infs)}条相关语录\n\n"
             for i in range(len(infs)):
+                if re.findall(url_pattern, infs[i][1]):
+                    k += 1 #被拦截的url消息计数
+                    continue
                 msg += f'{infs[i][0]}语录-{infs[i][3]}：\n'
                 msg += infs[i][1]
                 msg += f'\n添加者：{infs[i][2]}'
                 if i < len(infs)-1:
                     msg += '\n\n'
+            msg += f'共计{k}条语录被拦截.'
             await message.reply(content=msg)
     return True
 
