@@ -315,7 +315,7 @@ def DropAna(name:str)->bool:
         db.commit()
         if name[-4:-1]+name[-1] == "<高级>":
             CleanReRule(name[:-4])
-        os.system(f"rm -rf imgs/{name}_*")
+        os.system(f"rm -rf /www/wwwroot/EasyImages/i/qqbot/{name}_*")
         return True
     except:
         return False

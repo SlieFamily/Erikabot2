@@ -26,8 +26,8 @@ def image_download(url:str, tag:str, use_timestamp:bool = True)->str:
     }
     print("[!]访问图片url中")
     req = requests.get(url, headers = headers, timeout = 5)
-    filename = '/www/wwwroot/EasyImages/i/'
-    dirname = 'qqbot/'
+    filename = ''
+    dirname = '/www/wwwroot/EasyImages/i/qqbot/'
     if req.content:
         if use_timestamp:
             filename = tag+"_"+str(time.time())+".jpg"
