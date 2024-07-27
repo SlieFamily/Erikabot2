@@ -2,28 +2,20 @@ import re
 import requests
 import time
 import os
+import sqlite3
 
-def get_image_url(text:str)->str:
+# 获取Bot主目录
+path = os.path.abspath(os.getcwd())
+
+def get_image_name(text:str)->str:
     '''
         匹配给定CQ文本中的图片url
     '''
-    res = re.findall(",(url|file)=((http|https)+://[^\s]*)[,]*\]",text)
-    if res:
-        return res[0][1].split(',')[0]
+    match = re.match(r'\[CQ:image,file=file:///home/erikabot/imgs/([^]]+)\]', text)
+    if match:
+        return match.group(1)
     else:
         return ''
-
-def cq_image_to(text:str, url:str='')->str:
-    '''
-        将原始CQ消息的image格式修改为file-url形式
-    '''
-    res = get_image_url(text)
-    if res : #判断是否为image消息
-        if not url:
-            url = res #如果没有提供url，直接转换；否则转换为指定url
-        ana = re.sub("\[CQ:image[\w\W]*,(file|url)=(http|https)://[^\s]*[\w\W]*\]","[CQ:image,file="+url+"]",text)
-        return ana
-    return ''
 
 def image_download(url:str, tag:str, use_timestamp:bool = True)->str:
     '''
@@ -34,8 +26,8 @@ def image_download(url:str, tag:str, use_timestamp:bool = True)->str:
     }
     print("[!]访问图片url中")
     req = requests.get(url, headers = headers, timeout = 5)
-    filename = ''
-    dirname = 'imgs/'
+    filename = '/www/wwwroot/EasyImages/i/'
+    dirname = 'qqbot/'
     if req.content:
         if use_timestamp:
             filename = tag+"_"+str(time.time())+".jpg"
@@ -49,3 +41,30 @@ def image_download(url:str, tag:str, use_timestamp:bool = True)->str:
 
 
 
+def transf_anas_image():
+    '''
+    批量清理旧版本中的图片问题
+    '''
+    db = sqlite3.connect(path+'/db/anas.db')
+    cur = db.cursor()
+    cur.execute('select * from AnaList') #获取语录清单
+    names = [name[0] for name in cur.fetchall()]
+
+    for name in names: #对每一个语录进行处理
+        cur.execute(f'select ana from "_{name}"')
+        anas = cur.fetchall()
+        print(f"======处理{name}语录=======")
+        for ana in anas:
+            print("-----START-------")
+            ana = ana[0]
+            url = get_image_name(ana)
+            if url:
+                print('获得图片名称：',url)
+                new_ana = f"[CQ:image,url=https://image.qslie.top/i/qqbot/{url}]" 
+                print('重建语录内容：',new_ana)
+                cur.execute(f'update "_{name}" set ana = "{new_ana}" where ana = "{ana}"')
+                db.commit()
+            else:
+                print('[!]当前语录无图片信息')
+            print("------END-------")
+        print("====================")

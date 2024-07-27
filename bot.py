@@ -64,7 +64,7 @@ async def addana(api: BotAPI, message: Message, params=None):
                 if media.content_type == 'image/jpeg':
                     _log.info('[!]所添加语录存在图片消息')
                     file_url = image_download(media.url, tag=name)
-                    ana = f"[CQ:image,file=file://{path}/{file_url}]" #标记为图片类型'file://'+path+'/
+                    ana = f"[CQ:image,url=https://image.qslie.top/i/qqbot/{file_url}]"
                     break
                 else:
                     return True
@@ -137,7 +137,7 @@ async def theirana(message: Message):
             except:
                 pass
         if my_ana:
-            match = re.match(r'\[CQ:image,file=([^]]+)\]', my_ana)
+            match = re.search(r'\[CQ:image,url=([^]]+)\]', my_ana)
             if match:
                 file_url = match.group(1)
                 _log.info(file_url)
@@ -155,17 +155,16 @@ async def theirana(message: Message):
                 return True
             # markdown = MarkdownPayload(content=f"{my_ana}\n>{name}语录")
             # keyboard = KeyboardPayload(content=build_a_demo_keyboard(name))
-            messageResult = await message._api.post_group_message(
+            else:
+                await message._api.post_group_message(
                     group_openid=message.group_openid,
                     msg_type=0, #2为markdown消息 
                     msg_id=message.id,
                     content=my_ana,
                     # markdown=markdown,
                     # keyboard=keyboard,
-            )
-
-            _log.info(messageResult)
-            return True
+                )
+                return True
 
 class MyClient(botpy.Client):
     async def on_ready(self):
