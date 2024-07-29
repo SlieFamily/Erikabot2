@@ -61,7 +61,7 @@ async def addana(api: BotAPI, message: Message, params=None):
         by = "Auto"
         if not ana:
             for media in message.attachments:
-                if media.content_type == 'image/jpeg':
+                if media.content_type in ['image/jpeg', 'image/png', 'image/gif']:
                     _log.info('[!]所添加语录存在图片消息')
                     file_url = image_download(media.url, tag=name)
                     ana = f"[CQ:image,url=https://image.qslie.top/i/qqbot/{file_url}]"

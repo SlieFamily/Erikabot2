@@ -17,7 +17,7 @@ def get_image_name(text:str)->str:
     else:
         return ''
 
-def image_download(url:str, tag:str, use_timestamp:bool = True)->str:
+def image_download(url:str, tag:str, suffix:str = ".jpg", use_timestamp:bool = True)->str:
     '''
         根据所提供的url和tag下载图片并重命名
     '''
@@ -30,9 +30,9 @@ def image_download(url:str, tag:str, use_timestamp:bool = True)->str:
     dirname = '/www/wwwroot/EasyImages/i/qqbot/'
     if req.content:
         if use_timestamp:
-            filename = tag+"_"+str(time.time())+".jpg"
+            filename = tag+"_"+str(time.time())+suffix
         else:
-            filename = tag+".jpg"
+            filename = tag+suffix
         with open(dirname+filename, mode = "wb") as f:
             f.write(req.content) # 下载图片
         print("[!]图片资源下载成功")
