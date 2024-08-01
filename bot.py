@@ -72,6 +72,8 @@ async def addana(api: BotAPI, message: Message, params=None):
             await message.reply(content=random.choice(rsp))
         else:
             await message.reply(content="苦撸西，失败了失败了！")
+    else:
+        await message.reply(content="请输入所需添加的语录及其内容作为参数。\n如：/add 测试语录：内容文本")
     return True
 
 @Commands("/del")
@@ -89,6 +91,8 @@ async def delana(api: BotAPI, message: Message, params=None):
             await message.reply(content="这种垃圾语录没有存在的必要！")
         else:
             await message.reply(content="失败了失败了失败了……")
+    else:
+        await message.reply(content="请输入所需删除的语录及其序号作为参数。\n如：/del 测试语录-3")
     return True
 
 @Commands("/drop")
@@ -103,6 +107,8 @@ async def dropana(api: BotAPI, message: Message, params=None):
             await message.reply(content=f"果然{name}语录，就是应该狼狈退场呢~")
         else:
             await message.reply(content="嘁，让他侥幸存活了")
+    else:
+        await message.reply(content="请输入所需销毁的语录作为参数。\n如：/drop 测试语录")
     return True
 
 @Commands("/search")
@@ -126,10 +132,11 @@ async def searchana(api: BotAPI, message: Message, params=None):
                 msg += f'{infs[i][0]}语录-{infs[i][3]}：\n'
                 msg += infs[i][1]
                 msg += f'\n添加者：{infs[i][2]}'
-                if i < len(infs)-1:
-                    msg += '\n\n'
+                msg += '\n\n'
             msg += f'共计{k}条语录被拦截.'
             await message.reply(content=msg)
+    else:
+        await message.reply(content="请输入所需搜索的语录关键词作为参数。\n如：/search 内容")
     return True
 
 async def theirana(message: Message):
@@ -204,5 +211,5 @@ if __name__ == "__main__":
 
     # 通过kwargs，设置需要监听的事件通道
     intents = botpy.Intents(public_messages=True)
-    client = MyClient(intents=intents, is_sandbox=True)
+    client = MyClient(intents=intents) # , is_sandbox=True
     client.run(appid=test_config["appid"], secret=test_config["secret"])
