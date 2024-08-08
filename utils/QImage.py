@@ -3,6 +3,8 @@ import requests
 import time
 import os
 import sqlite3
+import base64
+
 
 # 获取Bot主目录
 path = os.path.abspath(os.getcwd())
@@ -39,7 +41,11 @@ def image_download(url:str, tag:str, suffix:str = ".jpg", use_timestamp:bool = T
         return  filename
     return filename
 
-
+def image_to_base64(image_path):
+    # 读取图片文件并获取其base64编码
+    with open("/www/wwwroot/EasyImages/"+image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read())
+    return encoded_string.decode('utf-8')
 
 def transf_anas_image():
     '''

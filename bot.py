@@ -71,7 +71,7 @@ async def addana(api: BotAPI, message: Message, params=None):
         if model.IsAdded(name,ana,by):
             await message.reply(content=random.choice(rsp))
         else:
-            await message.reply(content="苦撸西，失败了失败了！")
+            await message.reply(content="杂鱼~杂鱼~ 这种情报，绘梨花早就记录。")
     else:
         await message.reply(content="请输入所需添加的语录及其内容作为参数。\n如：/add 测试语录：内容文本")
     return True
@@ -133,11 +133,17 @@ async def searchana(api: BotAPI, message: Message, params=None):
                 msg += infs[i][1]
                 msg += f'\n添加者：{infs[i][2]}'
                 msg += '\n\n'
-            msg += f'共计{k}条语录被拦截.'
+            msg += f'共计{k}条语录被隐藏.'
             await message.reply(content=msg)
     else:
         await message.reply(content="请输入所需搜索的语录关键词作为参数。\n如：/search 内容")
     return True
+
+@Commands("/list")
+async def listana(api: BotAPI, message: Message, params=None):
+    await message.reply(content="暂未实现。需获得markdown支持！")
+    return True
+
 
 async def theirana(message: Message):
     name = re.findall(f" {anas_rule}[-]*([0-9]*)",str(message.content))
@@ -154,14 +160,15 @@ async def theirana(message: Message):
             except:
                 pass
         if my_ana:
-            match = re.search(r'\[CQ:image,url=([^]]+)\]', my_ana)
+            match = re.search(r'\[CQ:image,url=https://image.qslie.top/([^]]+)\]', my_ana)
             if match:
                 file_url = match.group(1)
                 _log.info(file_url)
-                uploadMedia = await message._api.post_group_file(
+                uploadMedia = await message._api.post_group_base64file(
                     group_openid=message.group_openid, 
                     file_type=1, # 1 图片，2 视频，3 语音，4 文件（暂不开放）
-                    url=file_url # 文件Url
+                    # url=file_url, # 文件Url
+                    file_data=image_to_base64(file_url)
                 )
                 await message._api.post_group_message(
                     group_openid=message.group_openid,
@@ -194,7 +201,8 @@ class MyClient(botpy.Client):
             delana,
             dropana,
             searchana,
-            # good_night,
+            listana,
+            # xxx,
         ]
         for handler in handlers:
             if await handler(api=self.api, message=message):
@@ -211,5 +219,5 @@ if __name__ == "__main__":
 
     # 通过kwargs，设置需要监听的事件通道
     intents = botpy.Intents(public_messages=True)
-    client = MyClient(intents=intents) # , is_sandbox=True
+    client = MyClient(intents=intents, timeout=20) # , is_sandbox=True
     client.run(appid=test_config["appid"], secret=test_config["secret"])
