@@ -116,6 +116,10 @@ async def searchana(api: BotAPI, message: Message, params=None):
     if params:
         _log.info(params)
         ana = str(params)
+        if len(ana) < 2:
+            await message.reply(content="查询字数应该大于或等于2。")
+            return True
+
         infs = model.Inf(ana)
 
         url_pattern = re.compile(
@@ -133,7 +137,7 @@ async def searchana(api: BotAPI, message: Message, params=None):
                 msg += infs[i][1]
                 msg += f'\n添加者：{infs[i][2]}'
                 msg += '\n\n'
-            msg += f'共计{k}条语录被隐藏.'
+            msg += f'共计{k}条语录被隐藏'
             await message.reply(content=msg)
     else:
         await message.reply(content="请输入所需搜索的语录关键词作为参数。\n如：/search 内容")
@@ -145,7 +149,7 @@ async def listana(api: BotAPI, message: Message, params=None):
     return True
 
 
-async def theirana(message: Message):
+async def group_theirana(message: Message):
     name = re.findall(f" {anas_rule}[-]*([0-9]*)",str(message.content))
     _log.info(str(name))
     if name:
@@ -190,12 +194,35 @@ async def theirana(message: Message):
                 )
                 return True
 
+async def guild_theirana(message: Message):
+    name = re.findall(f" {anas_rule}[-]*([0-9]*)",str(message.content))
+    _log.info(str(name))
+    if name:
+        num = name[0][1]
+        name = name[0][0]
+        group_id = "144115218677966082"
+        if not num:
+            my_ana = model.GetAna(name,group_id) #获取随机语录
+        else:
+            try:
+               my_ana = model.GetAna(name,group_id,int(num)) #获取指定序号的语录
+            except:
+                pass
+        if my_ana:
+            match = re.search(r'\[CQ:image,url=https://image.qslie.top/([^]]+)\]', my_ana)
+            if match:
+                file_url = match.group(1)
+                await message.reply(content='',file_image="/www/wwwroot/EasyImages/"+file_url)
+                return True
+            await message.reply(content=my_ana)
+            return True
+
+
 class MyClient(botpy.Client):
     async def on_ready(self):
         _log.info(f"robot 「{self.robot.name}」 on_ready!")
 
     async def on_group_at_message_create(self, message: Message):
-        
         handlers = [
             addana,
             delana,
@@ -209,7 +236,23 @@ class MyClient(botpy.Client):
                 return
 
         # 触发语录的情况
-        await theirana(message=message)
+        await group_theirana(message=message)
+
+    async def on_at_message_create(self, message: Message):
+        handlers = [
+            addana,
+            delana,
+            dropana,
+            searchana,
+            listana,
+            # xxx,
+        ]
+        for handler in handlers:
+            if await handler(api=self.api, message=message):
+                return
+
+        # 触发语录的情况
+        await guild_theirana(message=message)
 
 
 if __name__ == "__main__":
@@ -218,6 +261,6 @@ if __name__ == "__main__":
     # intents.public_messages=True
 
     # 通过kwargs，设置需要监听的事件通道
-    intents = botpy.Intents(public_messages=True)
+    intents = botpy.Intents(public_messages=True, public_guild_messages=True)
     client = MyClient(intents=intents, timeout=20) # , is_sandbox=True
     client.run(appid=test_config["appid"], secret=test_config["secret"])
