@@ -100,13 +100,14 @@ async def dropana(api: BotAPI, message: Message, params=None):
     if params:
         _log.info(params)
         name = re.findall(anas_rule, str(params))
-        if name:
-            name = name[0]
-            flag = model.DropAna(name)
-        if flag:
-            await message.reply(content=f"果然{name}语录，就是应该狼狈退场呢~")
-        else:
-            await message.reply(content="嘁，让他侥幸存活了")
+        await message.reply(content="你drop你🐎呢")
+#        if name:
+#            name = name[0]
+#            flag = model.DropAna(name)
+#        if flag:
+#            await message.reply(content=f"果然{name}语录，就是应该狼狈退场呢~")
+#        else:
+#            await message.reply(content="嘁，让他侥幸存活了")
     else:
         await message.reply(content="请输入所需销毁的语录作为参数。\n如：/drop 测试语录")
     return True
