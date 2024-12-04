@@ -3,6 +3,7 @@ import asyncio
 import os
 import re
 import random
+import math
 import botpy
 from botpy import logging, BotAPI
 from botpy.ext.command_util import Commands
@@ -23,11 +24,11 @@ _log = logging.get_logger()
 from db import model
 model.Init()
 
-anas_rule = "([\w\W]{1,6})语录"
+anas_rule = "([\w\W]{1,12})语录"
 rsp = ["用最爱的筷子品味最恶俗的语录才称得上健全~","知性的强J者怎能输给后辈！"]
 
 def split_ana(text):
-    name = re.findall(f"{anas_rule}[:,：]?([\s\S]*)",str(text))[0]
+    name = re.findall(f"{anas_rule}[:,：,\s]?([\s\S]*)",str(text))[0]
     ana = name[1]
     name = name[0]
     return name, ana
@@ -146,54 +147,84 @@ async def searchana(api: BotAPI, message: Message, params=None):
 
 @Commands("/list")
 async def listana(api: BotAPI, message: Message, params=None):
-    await message.reply(content="暂未实现。需获得markdown支持！")
+    names,cnts = model.GetList()
+    msg = []
+    string = ""
+    gp_names = []; gp_cnts = [] #每20条一页
+    for i in range(0,len(names),20):
+        gp_names.append(names[i:i+20])
+        gp_cnts.append(cnts[i:i+20])
+    for k in range(math.ceil(len(names)/20)):
+        string = "\n"    
+        for i in range(len(gp_names[k])):
+            string += gp_names[k][i]+'语录 \t('+ str(gp_cnts[k][i]) +'条)\n'
+        string += f"\n页数: {k+1}/{math.ceil(len(names)/20)}"
+        msg.append(string)
+    
+    if params:
+        _log.info(f"list - {params}")
+        try:
+            num = int(params)
+        except:
+            num = 1
+    else:
+        num = 1
+    if num >= k: return False
+    await message.reply(content=msg[num-1])
     return True
 
 
 async def group_theirana(message: Message):
     name = re.findall(f" {anas_rule}[-]*([0-9]*)",str(message.content))
+    super_name = re.findall(f" ({model.GetReRule()})[-]*([0-9]*)",str(message.content))
     _log.info(str(name))
-    if name:
+    _log.info(str(super_name))
+    if super_name:
+        num = super_name[0][1]
+        name = super_name[0][0]+"<高级>"
+    elif name:
         num = name[0][1]
         name = name[0][0]
-        group_id = "144115218677966082"
-        if not num:
-            my_ana = model.GetAna(name,group_id) #获取随机语录
+    else:
+        return False
+    group_id = "144115218677966082"
+    if not num:
+        my_ana = model.GetAna(name,group_id) #获取随机语录
+    else:
+        try:
+            my_ana = model.GetAna(name,group_id,int(num)) #获取指定序号的语录
+        except:
+            pass
+    if my_ana:
+        match = re.search(r'\[CQ:image,url=https://image.qslie.top/([^]]+)\]', my_ana)
+        if match:
+            file_url = match.group(1)
+            _log.info(file_url)
+            uploadMedia = await message._api.post_group_base64file(
+                group_openid=message.group_openid, 
+                file_type=1, # 1 图片，2 视频，3 语音，4 文件（暂不开放）
+                # url=file_url, # 文件Url
+                file_data=image_to_base64(file_url)
+            )
+            await message._api.post_group_message(
+                group_openid=message.group_openid,
+                msg_type=7, # 0 文本，2 是 markdown，3 ark 消息，4 embed，7 media 富媒体
+                msg_id=message.id,
+                media=uploadMedia
+            )
+            return True
+        # markdown = MarkdownPayload(content=f"{my_ana}\n>{name}语录")
+        # keyboard = KeyboardPayload(content=build_a_demo_keyboard(name))
         else:
-            try:
-               my_ana = model.GetAna(name,group_id,int(num)) #获取指定序号的语录
-            except:
-                pass
-        if my_ana:
-            match = re.search(r'\[CQ:image,url=https://image.qslie.top/([^]]+)\]', my_ana)
-            if match:
-                file_url = match.group(1)
-                _log.info(file_url)
-                uploadMedia = await message._api.post_group_base64file(
-                    group_openid=message.group_openid, 
-                    file_type=1, # 1 图片，2 视频，3 语音，4 文件（暂不开放）
-                    # url=file_url, # 文件Url
-                    file_data=image_to_base64(file_url)
-                )
-                await message._api.post_group_message(
-                    group_openid=message.group_openid,
-                    msg_type=7, # 0 文本，2 是 markdown，3 ark 消息，4 embed，7 media 富媒体
-                    msg_id=message.id,
-                    media=uploadMedia
-                )
-                return True
-            # markdown = MarkdownPayload(content=f"{my_ana}\n>{name}语录")
-            # keyboard = KeyboardPayload(content=build_a_demo_keyboard(name))
-            else:
-                await message._api.post_group_message(
-                    group_openid=message.group_openid,
-                    msg_type=0, #2为markdown消息 
-                    msg_id=message.id,
-                    content=my_ana,
-                    # markdown=markdown,
-                    # keyboard=keyboard,
-                )
-                return True
+            await message._api.post_group_message(
+                group_openid=message.group_openid,
+                msg_type=0, #2为markdown消息 
+                msg_id=message.id,
+                content=my_ana,
+                # markdown=markdown,
+                # keyboard=keyboard,
+            )
+            return True
 
 async def guild_theirana(message: Message):
     name = re.findall(f" {anas_rule}[-]*([0-9]*)",str(message.content))
